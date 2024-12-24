@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '/models/note.dart';
-import 'note_edit_screen.dart';
+import '/screens/note_edit_screen.dart';
+import '../test_data/note_test_data.dart';
 
 String formatDate(DateTime date) {
   return DateFormat.yMMMd().format(date); // Example: Dec 16, 2024
@@ -18,7 +19,17 @@ class NoteListScreen extends StatefulWidget {
 }
 
 class _NoteListScreenState extends State<NoteListScreen> {
-  List<Note> notes = [];
+  List<Note> notes = generateTestNotes();
+  bool _isSortedByNewest = true; // Controls sorting order
+
+  void _toggleSortOrder() {
+    setState(() {
+      _isSortedByNewest = !_isSortedByNewest;
+      notes.sort((a, b) => _isSortedByNewest
+          ? b.timeCreated.compareTo(a.timeCreated)
+          : a.timeCreated.compareTo(b.timeCreated));
+    });
+  }
 
   void _addOrEditNote(Note? note, FormMode formMode) async {
     final result = await Navigator.push(
@@ -41,6 +52,10 @@ class _NoteListScreenState extends State<NoteListScreen> {
             notes[index] = result;
           }
         }
+        // Reapply the sorting after any addition or update
+        notes.sort((a, b) => _isSortedByNewest
+            ? b.timeCreated.compareTo(a.timeCreated)
+            : a.timeCreated.compareTo(b.timeCreated));
       });
     }
   }
@@ -75,52 +90,92 @@ class _NoteListScreenState extends State<NoteListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notes'),
-      ),
-      body: notes.isEmpty
-          ? const Center(
-              child: Text(
-                "No Notes Added!",
-                style: TextStyle(fontSize: 18),
-              ),
-            )
-          : ListView.builder(
-              itemCount: notes.length,
-              itemBuilder: (context, index) {
-                final note = notes[index];
-                return ListTile(
-                  title: Text(note.title),
-                  subtitle: Text(
-                    "${note.content}\nCreated: ${formatDate(note.timeCreated)}",
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  isThreeLine: true,
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _addOrEditNote(note, FormMode.edit);
-                      } else if (value == 'delete') {
-                        _deleteNoteConfirm(note);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Text('Edit'),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Delete'),
-                      ),
-                    ],
-                  ),
-                  onLongPress: () => _deleteNoteConfirm(note),
-                );
-              },
+        actions: [
+          IconButton(
+            onPressed: _toggleSortOrder,
+            icon: Icon(
+              _isSortedByNewest ? Icons.arrow_downward : Icons.arrow_upward,
             ),
-      floatingActionButton: FloatingActionButton(
+            tooltip: 'Sort by Date',
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: notes.isEmpty
+            ? const Center(
+                child: Text(
+                  "No Notes Added!",
+                  style: TextStyle(fontSize: 18),
+                ),
+              )
+            : ListView.builder(
+                itemCount: notes.length,
+                itemBuilder: (context, index) {
+                  final note = notes[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      title: Text(
+                        note.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            note.content,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Date: ${formatDate(note.timeCreated)}",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _addOrEditNote(note, FormMode.edit);
+                          } else if (value == 'delete') {
+                            _deleteNoteConfirm(note);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ],
+                      ),
+                      onLongPress: () => _deleteNoteConfirm(note),
+                    ),
+                  );
+                },
+              ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addOrEditNote(null, FormMode.add),
-        child: const Icon(Icons.add),
+        label: const Text("Add Note"),
+        icon: const Icon(Icons.add),
       ),
     );
   }

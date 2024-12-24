@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '/models/note.dart';
 import 'note_list_screen.dart';
@@ -66,8 +67,8 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
       appBar: AppBar(
         title: Text(widget.formMode == FormMode.add ? 'Add Note' : 'Edit Note'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -85,6 +86,7 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
                 onSaved: (value) {
                   _title = value!;
                 },
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 10),
               TextFormField(
@@ -100,13 +102,14 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
                 onSaved: (value) {
                   _content = value!;
                 },
+                textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      'Date Created: ${_selectedDate.toLocal()}'.split(' ')[0],
+                      'Date Created: ${DateFormat.yMMMd().format(_selectedDate)}',
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
