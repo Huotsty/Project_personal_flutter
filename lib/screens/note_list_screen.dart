@@ -89,7 +89,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notes'),
+        title: Text('Notes (${notes.length})'),
         actions: [
           IconButton(
             onPressed: _toggleSortOrder,
